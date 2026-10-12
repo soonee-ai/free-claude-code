@@ -548,6 +548,16 @@ fcc-doctor
 - [Report bugs or request features](https://github.com/Alishahryar1/free-claude-code/issues)
 - [Contributing guide](CONTRIBUTING.md)
 
+## Additional integrations (this fork)
+
+Field-tested extras from a production Hermes Agent deployment, on the
+[`integrations/hermes`](https://github.com/soonee-ai/free-claude-code/tree/integrations/hermes)
+branch — see [`docs/integrations/`](docs/integrations/):
+
+- **Hermes Agent wiring** — manual custom-provider setup (`transport: codex_responses`) for installs whose Hermes build fails the `fcc-hermes` semver gate, with the security baseline and validation sequence.
+- **`/fcc on|off` toggle plugin** — a working Hermes plugin that flips any chat session between FCC's free models and the day-to-day paid provider, per session (plus the "why injection fails" lesson).
+- **Production runbook** — install-without-bundled-agents, security pre-birth settings, TeleIn `/secret` vault-delivery hazards, NVIDIA signup automation traps, and browsing discipline for WAF'd signup flows.
+
 ## License
 
 GNU Affero General Public License version 3 only (`AGPL-3.0-only`). See [LICENSE](LICENSE) for details.

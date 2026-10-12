@@ -1,0 +1,4 @@
+name: fcc-toggle
+version: 1.0.0
+description: "/fcc on|off|status - switch this session to the FCC free proxy and back"
+kind: standalone
