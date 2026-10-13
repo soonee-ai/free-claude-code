@@ -99,3 +99,38 @@ escalate (15m → 1h → 6h → 24h).
 `fcc-server > /tmp/fcc-server.log 2>&1` as a background process dies with the
 session/reboot; for 24/7 run under systemd --user or tmux. Log tail is the
 fastest health check: `POST /v1/responses 200 OK` lines mean clients are live.
+
+## Python env shadowing trap (fastapi.sse crash)
+
+If `fcc-server` is started from inside an agent/managed shell, a leaked
+`PYTHONPATH` pointing at a host venv shadows the uv-tool environment's own
+dependencies: the host fastapi (older, no `fastapi.sse` module) wins, and
+`fcc-server` dies instantly with
+`ModuleNotFoundError: No module named 'fastapi.sse'` no matter how many times
+you reinstall the tool env. Symptom: every start attempt crashes at the same
+import inside `api/code_sessions_routes.py`.
+
+Fix: strip the inherited env before exec. A minimal launcher:
+
+```bash
+#!/bin/sh
+unset PYTHONPATH
+exec ~/.local/bin/fcc-server "$@"
+```
+
+Verify isolation with
+`env -u PYTHONPATH ~/.local/share/uv/tools/free-claude-code/bin/python -c 'import fastapi.sse'`.
+
+## Multi-upstream keys and the free lanes
+
+Multiple provider keys coexist in `~/.fcc/.env` (e.g. `NVIDIA_NIM_API_KEY`,
+`OPENROUTER_API_KEY`, `XAI_API_KEY`). The catalog merges across all configured
+upstreams (800+ model ids); each id is prefixed with the upstream route, e.g.
+`claude-3-freecc-no-thinking/open_router/<provider>/<model>`. Practical free
+lanes (verified live, 2026-10):
+
+- `open_router/openrouter/free` — OpenRouter's own `:free` model pool; works
+  on both `POST /v1/responses` (streaming-only) and `POST /v1/messages`.
+- `openrouter/auto`, `openrouter/auto-beta`, and all `open_router/x-ai/grok*`
+  routes return HTTP 402 unless the corresponding provider key has credits —
+  a key alone is not enough; the paid free-tier gate is per-credit.
